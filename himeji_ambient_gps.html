@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ambient Himeji GPS</title>
+
+<style>
+body{
+    margin:0;
+    background:#0b0f16;
+    color:#f3f4f6;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+
+.bg{
+    position:fixed;
+    inset:0;
+    background:
+    radial-gradient(circle at top left, rgba(70,120,255,.16), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(120,160,255,.08), transparent 30%),
+    linear-gradient(180deg,#0b0f16,#111827);
+    z-index:0;
+}
+
+.container{
+    position:relative;
+    z-index:1;
+    max-width:440px;
+    margin:auto;
+    padding:24px;
+    min-height:100vh;
+    box-sizing:border-box;
+}
+
+.small{
+    color:#7b8494;
+    font-size:12px;
+    letter-spacing:.08em;
+}
+
+h1{
+    margin-top:20px;
+    font-size:34px;
+    line-height:1.2;
+    font-weight:500;
+}
+
+.sub{
+    color:#aab2bf;
+    line-height:1.7;
+    margin-top:16px;
+    margin-bottom:28px;
+}
+
+.moods{
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+}
+
+.mood{
+    border:none;
+    border-radius:999px;
+    padding:14px 18px;
+    cursor:pointer;
+    background:rgba(255,255,255,.05);
+    color:#fff;
+    font-size:14px;
+    transition:.2s;
+}
+
+.mood:hover{
+    transform:translateY(-2px);
+    background:rgba(255,255,255,.1);
+}
+
+.card{
+    margin-top:28px;
+    background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.06);
+    border-radius:28px;
+    padding:22px;
+    display:none;
+}
+
+.place{
+    font-size:28px;
+    margin-top:8px;
+}
+
+.meta{
+    color:#aab2bf;
+    line-height:1.8;
+    margin-top:14px;
+}
+
+.tags{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:18px;
+}
+
+.tag{
+    padding:8px 12px;
+    border-radius:999px;
+    background:rgba(100,130,255,.16);
+    color:#dbe4ff;
+    font-size:12px;
+}
+
+.route{
+    margin-top:20px;
+    line-height:1.8;
+    color:#d1d5db;
+}
+
+.btn{
+    display:inline-block;
+    margin-top:22px;
+    padding:14px 18px;
+    border-radius:16px;
+    text-decoration:none;
+    color:white;
+    background:rgba(100,130,255,.22);
+}
+
+.location{
+    margin-top:16px;
+    color:#8f9aae;
+    font-size:13px;
+}
+
+.footer{
+    margin-top:40px;
+    color:#6b7280;
+    font-size:12px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="bg"></div>
+
+<div class="container">
+
+<div class="small">AMBIENT HIMEJI GPS</div>
+
+<h1>今の空気に<br>近い場所へ</h1>
+
+<div class="sub">
+GPSから現在地を取得して、<br>
+姫路市内の“空気帯”へ案内します。
+</div>
+
+<div class="moods">
+<button class="mood" onclick="recommend('quiet')">静かになりたい</button>
+<button class="mood" onclick="recommend('drift')">漂いたい</button>
+<button class="mood" onclick="recommend('escape')">人を遠ざけたい</button>
+<button class="mood" onclick="recommend('wind')">風に当たりたい</button>
+<button class="mood" onclick="recommend('night')">終電後っぽい</button>
+</div>
+
+<div class="location" id="locationStatus">
+位置情報待機中
+</div>
+
+<div class="card" id="card">
+<div class="small">RECOMMENDED AIR</div>
+
+<div class="place" id="place"></div>
+
+<div class="meta" id="desc"></div>
+
+<div class="tags" id="tags"></div>
+
+<div class="route" id="route"></div>
+
+<a id="mapLink" class="btn" target="_blank">Google Mapsで開く</a>
+</div>
+
+<div class="footer">
+Prototype: GPS × ambient routing<br>
+現在地に近い空気帯を返す実験。
+</div>
+
+</div>
+
+<script>
+
+let currentLat = null;
+let currentLon = null;
+
+const spots = {
+quiet:[
+{
+name:"姫路城 外濠西側",
+lat:34.8362,
+lon:134.6872,
+desc:"観光導線から少し外れた水辺。歩行速度が自然に落ちる帯。",
+tags:["静","水","微光","整理"]
+},
+{
+name:"名古山霊苑周辺",
+lat:34.8311,
+lon:134.6705,
+desc:"街音が薄くなる高低差エリア。",
+tags:["静","坂","余白"]
+}
+],
+
+drift:[
+{
+name:"飾磨港 防波堤側",
+lat:34.7945,
+lon:134.6710,
+desc:"目的地感が弱い港エリア。風と反響だけ残る。",
+tags:["漂","港","反響","夜"]
+}
+],
+
+escape:[
+{
+name:"手柄山裏階段",
+lat:34.8187,
+lon:134.6848,
+desc:"視線密度が低い帯。少し木の匂いが強い。",
+tags:["逃","低密度","沈静"]
+}
+],
+
+wind:[
+{
+name:"夢前川沿い",
+lat:34.8080,
+lon:134.6390,
+desc:"風の抜けが強い。空の割合が高い。",
+tags:["風","空","呼吸"]
+}
+],
+
+night:[
+{
+name:"姫路駅東 高架下",
+lat:34.8268,
+lon:134.6928,
+desc:"終電後だけ静けさが変わる帯。",
+tags:["夜","青","微接続"]
+}
+]
+};
+
+function getDistance(lat1, lon1, lat2, lon2){
+
+const R = 6371;
+
+const dLat = (lat2-lat1) * Math.PI/180;
+const dLon = (lon2-lon1) * Math.PI/180;
+
+const a =
+Math.sin(dLat/2) * Math.sin(dLat/2) +
+Math.cos(lat1*Math.PI/180) *
+Math.cos(lat2*Math.PI/180) *
+Math.sin(dLon/2) * Math.sin(dLon/2);
+
+const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+return R * c;
+}
+
+function recommend(type){
+
+if(currentLat === null){
+alert("位置情報を取得中です");
+return;
+}
+
+const candidates = spots[type];
+
+let nearest = null;
+let nearestDistance = Infinity;
+
+candidates.forEach(spot=>{
+
+const dist = getDistance(
+currentLat,
+currentLon,
+spot.lat,
+spot.lon
+);
+
+if(dist < nearestDistance){
+nearestDistance = dist;
+nearest = spot;
+}
+
+});
+
+document.getElementById("place").innerText =
+nearest.name + " (" + nearestDistance.toFixed(1) + "km)";
+
+document.getElementById("desc").innerText =
+nearest.desc;
+
+const tags = document.getElementById("tags");
+tags.innerHTML = "";
+
+nearest.tags.forEach(tag=>{
+const el = document.createElement("div");
+el.className = "tag";
+el.innerText = tag;
+tags.appendChild(el);
+});
+
+document.getElementById("route").innerHTML =
+"現在地から比較的近い“空気帯”を選択。<br>無理に到着しなくても、方向だけ合わせればOK。";
+
+const link =
+"https://www.google.com/maps/dir/?api=1&destination=" +
+nearest.lat + "," + nearest.lon;
+
+document.getElementById("mapLink").href = link;
+
+document.getElementById("card").style.display = "block";
+
+}
+
+navigator.geolocation.getCurrentPosition(
+
+(position)=>{
+
+currentLat = position.coords.latitude;
+currentLon = position.coords.longitude;
+
+document.getElementById("locationStatus").innerText =
+"現在地取得: " +
+currentLat.toFixed(4) +
+", " +
+currentLon.toFixed(4);
+
+},
+
+(error)=>{
+
+document.getElementById("locationStatus").innerText =
+"位置情報が取得できませんでした";
+
+}
+
+);
+
+</script>
+
+</body>
+</html>
