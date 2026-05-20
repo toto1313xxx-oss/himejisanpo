@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ambient Himeji</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<style>
+body{
+    margin:0;
+    background:#090b10;
+    color:#f3f4f6;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    overflow-x:hidden;
+}
+
+.bg{
+    position:fixed;
+    inset:0;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(100,120,255,.12), transparent 25%),
+      radial-gradient(circle at 80% 70%, rgba(80,140,255,.08), transparent 25%),
+      linear-gradient(180deg,#090b10,#10131b);
+    z-index:0;
+}
+
+.container{
+    position:relative;
+    z-index:1;
+    max-width:430px;
+    margin:auto;
+    min-height:100vh;
+    padding:24px;
+    box-sizing:border-box;
+}
+
+.small{
+    color:#7c8595;
+    letter-spacing:.08em;
+    font-size:12px;
+}
+
+h1{
+    margin-top:18px;
+    font-weight:500;
+    line-height:1.2;
+    font-size:34px;
+}
+
+.sub{
+    color:#a0a8b7;
+    line-height:1.7;
+    margin-top:14px;
+    margin-bottom:28px;
+    font-size:15px;
+}
+
+.moods{
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+}
+
+.mood{
+    border:none;
+    cursor:pointer;
+    padding:14px 18px;
+    border-radius:999px;
+    background:rgba(255,255,255,.05);
+    color:#e5e7eb;
+    backdrop-filter:blur(12px);
+    transition:.25s;
+    font-size:14px;
+}
+
+.mood:hover{
+    transform:translateY(-2px);
+    background:rgba(255,255,255,.1);
+}
+
+.card{
+    margin-top:28px;
+    background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.06);
+    border-radius:28px;
+    padding:22px;
+    display:none;
+    animation:fade .4s ease;
+}
+
+@keyframes fade{
+    from{
+        opacity:0;
+        transform:translateY(12px);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
+
+.place{
+    font-size:28px;
+    margin-top:8px;
+}
+
+.meta{
+    color:#aab1bf;
+    line-height:1.8;
+    margin-top:14px;
+    font-size:15px;
+}
+
+.tags{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:18px;
+}
+
+.tag{
+    background:rgba(100,130,255,.16);
+    color:#dbe4ff;
+    border-radius:999px;
+    padding:8px 12px;
+    font-size:12px;
+}
+
+.walk{
+    margin-top:22px;
+    padding-top:18px;
+    border-top:1px solid rgba(255,255,255,.06);
+}
+
+.walktitle{
+    color:#7c8595;
+    font-size:12px;
+    margin-bottom:10px;
+    letter-spacing:.08em;
+}
+
+.route{
+    line-height:1.8;
+    color:#d1d5db;
+}
+
+.footer{
+    margin-top:36px;
+    color:#6b7280;
+    font-size:12px;
+    line-height:1.7;
+}
+
+.dot{
+    width:8px;
+    height:8px;
+    background:#7dd3fc;
+    border-radius:50%;
+    display:inline-block;
+    margin-right:8px;
+    box-shadow:0 0 16px rgba(125,211,252,.8);
+}
+</style>
+</head>
+
+<body>
+<div class="bg"></div>
+
+<div class="container">
+
+<div class="small"><span class="dot"></span>ambient himeji prototype</div>
+
+<h1>姫路の空気を<br>少し変える</h1>
+
+<div class="sub">
+目的地じゃなく、<br>
+今の状態に合う空気へ。
+</div>
+
+<div class="moods">
+<button class="mood" onclick="showMood('quiet')">静かになりたい</button>
+<button class="mood" onclick="showMood('drift')">少し漂いたい</button>
+<button class="mood" onclick="showMood('escape')">人を遠ざけたい</button>
+<button class="mood" onclick="showMood('wind')">風に当たりたい</button>
+<button class="mood" onclick="showMood('night')">終電後っぽい</button>
+</div>
+
+<div class="card" id="card">
+<div class="small">TONIGHT</div>
+
+<div class="place" id="place"></div>
+
+<div class="meta" id="desc"></div>
+
+<div class="tags" id="tags"></div>
+
+<div class="walk">
+<div class="walktitle">AIR ROUTE</div>
+<div class="route" id="route"></div>
+</div>
+</div>
+
+<div class="footer">
+姫路市向け ambient prototype<br>
+場所ではなく「存在しやすい空気」を返す実験。
+</div>
+
+</div>
+
+<script>
+const moods = {
+
+quiet:{
+place:"姫路城 外濠の西側",
+desc:"観光の主流から少し外れた帯。水面の反射が弱く、歩行速度が自然に落ちる。夜は生活音だけ残る。",
+tags:["静","水","微光","整理"],
+route:"姫路駅 → 大手前通りを外れる → 外濠沿いをゆっくり 15分"
+},
+
+drift:{
+place:"飾磨港の端",
+desc:"目的地感が薄い場所。コンテナ音と風だけが残る。考え事を止めるというより、散らす空気。",
+tags:["漂","港","余白","反響"],
+route:"山陽飾磨駅 → 港側へ → 自販機のある防波堤付近"
+},
+
+escape:{
+place:"手柄山の裏階段",
+desc:"視線が減る帯。完全無人ではないので孤立しすぎない。木の匂いが少し強い。",
+tags:["逃","低密度","木","沈静"],
+route:"手柄駅 → 公園裏 → 階段エリアを周回"
+},
+
+wind:{
+place:"夢前川沿い",
+desc:"風の通り道。空が開けていて、頭の密度を下げやすい。夕方以降の空気変化が大きい。",
+tags:["風","空","抜","呼吸"],
+route:"英賀保駅 → 川沿いへ → 橋を2つ渡る"
+},
+
+night:{
+place:"高架下の姫路駅東側",
+desc:"終電後にだけ現れる静けさ。完全な無音ではなく、遠い車音が残る。存在感が薄くなる空気。",
+tags:["夜","青","微接続","解離"],
+route:"姫路駅東口 → 高架沿い → コンビニ光を目印に"
+}
+
+};
+
+function showMood(type){
+
+const data = moods[type];
+
+document.getElementById("place").innerText = data.place;
+document.getElementById("desc").innerText = data.desc;
+document.getElementById("route").innerText = data.route;
+
+const tags = document.getElementById("tags");
+tags.innerHTML = "";
+
+data.tags.forEach(tag=>{
+    const el = document.createElement("div");
+    el.className = "tag";
+    el.innerText = tag;
+    tags.appendChild(el);
+});
+
+document.getElementById("card").style.display = "block";
+}
+</script>
+
+</body>
+</html>
